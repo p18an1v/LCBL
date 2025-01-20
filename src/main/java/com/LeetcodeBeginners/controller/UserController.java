@@ -2,6 +2,7 @@ package com.LeetcodeBeginners.controller;
 
 
 import com.LeetcodeBeginners.dto.UserResponseDTO;
+import com.LeetcodeBeginners.service.AuthService;
 import com.LeetcodeBeginners.service.UserService;
 import com.LeetcodeBeginners.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,11 +14,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/user")
 public class UserController {
 
-    private final UserService userService;
+    private final AuthService authService;
     private final JwtUtil jwtUtil;
 
-    public UserController(UserService userService, JwtUtil jwtUtil) {
-        this.userService = userService;
+    public UserController(UserService userService, AuthService authService, JwtUtil jwtUtil) {
+        this.authService = authService;
         this.jwtUtil = jwtUtil;
     }
 
@@ -41,7 +42,7 @@ public class UserController {
         String email = jwtUtil.extractEmail(token);
 
         // Fetch user details from the database
-        UserResponseDTO userResponse = userService.getUserDetailsByEmail(email);
+        UserResponseDTO userResponse = authService.getUserDetailsByEmail(email);
 
         return ResponseEntity.ok(userResponse);
     }

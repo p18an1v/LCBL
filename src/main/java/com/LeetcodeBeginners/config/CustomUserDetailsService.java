@@ -1,9 +1,7 @@
 package com.LeetcodeBeginners.config;
 
 import com.LeetcodeBeginners.repository.UserRepository;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -28,6 +26,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         System.out.println("Loaded User: " + user.getEmail() + ", Role: " + user.getRole());
+
         // Map role to GrantedAuthority
         //List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.getRole()));
 

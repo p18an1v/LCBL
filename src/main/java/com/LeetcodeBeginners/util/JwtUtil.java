@@ -63,4 +63,14 @@ public class JwtUtil {
         System.out.println("Extracted role: " + role);
         return role;
     }
+
+    // Check if the token is expired
+    private boolean isTokenExpired(String token) {
+        Date expirationDate = Jwts.parser()
+                .setSigningKey(key)
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
+        return expirationDate.before(new Date());
+    }
 }
