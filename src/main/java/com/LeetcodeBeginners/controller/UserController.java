@@ -1,6 +1,7 @@
 package com.LeetcodeBeginners.controller;
 
 
+import com.LeetcodeBeginners.dto.UserProgressDTO;
 import com.LeetcodeBeginners.dto.UserResponseDTO;
 import com.LeetcodeBeginners.service.AuthService;
 import com.LeetcodeBeginners.service.UserService;
@@ -16,36 +17,43 @@ public class UserController {
 
     private final AuthService authService;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     public UserController(UserService userService, AuthService authService, JwtUtil jwtUtil) {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
+        this.userService = userService;
     }
 
     // Endpoint to get user details after login
     @GetMapping("/details")
     public ResponseEntity<UserResponseDTO> getUserDetails(HttpServletRequest request) {
-        // Extract JWT token from Authorization header
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("Authorization Header: " + authHeader);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
         String token = authHeader.substring(7); // Remove "Bearer " prefix
-
-        // Validate and extract email from the token
         if (!jwtUtil.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
         String email = jwtUtil.extractEmail(token);
-
-        // Fetch user details from the database
         UserResponseDTO userResponse = authService.getUserDetailsByEmail(email);
 
         return ResponseEntity.ok(userResponse);
     }
 
+    // Get user progress
+    @GetMapping("/progress/{userId}")
+    public ResponseEntity<UserProgressDTO> getUserProgress(@PathVariable String userId) {
+        return ResponseEntity.ok(userService.getUserProgress(userId));
+    }
 
+    // Track a solved question
+    @PostMapping("/progress/{userId}/track")
+    public ResponseEntity<UserProgressDTO> trackQuestion(
+            @PathVariable String userId, @RequestParam String questionId) {
+        return ResponseEntity.ok(userService.trackQuestion(userId, questionId));
+    }
 }

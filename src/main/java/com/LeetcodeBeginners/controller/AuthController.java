@@ -1,9 +1,6 @@
 package com.LeetcodeBeginners.controller;
 
-import com.LeetcodeBeginners.dto.AuthResponseDTO;
-import com.LeetcodeBeginners.dto.LoginDTO;
-import com.LeetcodeBeginners.dto.PasswordResetRequest;
-import com.LeetcodeBeginners.dto.UserRegistrationDTO;
+import com.LeetcodeBeginners.dto.*;
 import com.LeetcodeBeginners.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,4 +56,7 @@ public class AuthController {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token!");
     }
+
+
+
 }

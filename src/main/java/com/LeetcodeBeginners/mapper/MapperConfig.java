@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MapperConfig {
+
     @Bean
     public ModelMapper modelMapper() {
         ModelMapper modelMapper = new ModelMapper();
@@ -17,6 +18,12 @@ public class MapperConfig {
         modelMapper.addConverter(new Converter<ObjectId, String>() {
             public String convert(MappingContext<ObjectId, String> context) {
                 return context.getSource() == null ? null : context.getSource().toString();
+            }
+        });
+
+        modelMapper.addConverter(new Converter<String, ObjectId>() {
+            public ObjectId convert(MappingContext<String, ObjectId> context) {
+                return context.getSource() == null ? null : new ObjectId(context.getSource());
             }
         });
 
