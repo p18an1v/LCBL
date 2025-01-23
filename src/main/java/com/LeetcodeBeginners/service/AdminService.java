@@ -1,13 +1,18 @@
 package com.LeetcodeBeginners.service;
 
+import com.LeetcodeBeginners.dto.QuestionDTO;
+import com.LeetcodeBeginners.dto.TopicDTO;
 import com.LeetcodeBeginners.entity.Question;
 import com.LeetcodeBeginners.entity.Topic;
 import com.LeetcodeBeginners.exception.ResourceNotFoundException;
+import com.LeetcodeBeginners.repository.QuestionRepository;
 import com.LeetcodeBeginners.repository.TopicRepository;
 import org.bson.types.ObjectId;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -16,33 +21,72 @@ public class AdminService {
     @Autowired
     private TopicRepository topicRepository;
 
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
     /**
      * Get all topics
      */
-    public List<Topic> getAllTopics() {
-        return topicRepository.findAll();
+    public List<TopicDTO> getAllTopics() {
+        List<Topic> topics = topicRepository.findAll();
+
+        return topics.stream()
+                .map(topic -> {
+                    // Map Topic to TopicDTO
+                    TopicDTO topicDTO = modelMapper.map(topic, TopicDTO.class);
+
+                    // Convert ObjectId list to String list
+                    List<String> questionIds = topic.getQuestionIds()
+                            .stream()
+                            .map(ObjectId::toString) // Convert ObjectId to String
+                            .toList();
+
+                    topicDTO.setQuestionIds(questionIds);
+                    return topicDTO;
+                })
+                .toList();
     }
 
     /**
-     * Create a new topic
+     * Create a new topic and initialize its question collection
      */
-    public Topic createTopic(Topic topic) {
-        validateTopic(topic);
-        return topicRepository.save(topic);
+    public TopicDTO createTopic(TopicDTO topicDTO) {
+        validateTopic(topicDTO);
+
+        // Map DTO to entity
+        Topic topic = modelMapper.map(topicDTO, Topic.class);
+
+        // Initialize questionIds as an empty list
+        topic.setQuestionIds(new ArrayList<>());
+
+        // Save the topic
+        Topic savedTopic = topicRepository.save(topic);
+
+        // Convert the saved topic back to DTO
+        TopicDTO savedTopicDTO = modelMapper.map(savedTopic, TopicDTO.class);
+
+        // Ensure questionIds is set as empty in the DTO
+        savedTopicDTO.setQuestionIds(new ArrayList<>());
+
+        return savedTopicDTO;
     }
 
     /**
      * Update an existing topic
      */
-    public Topic updateTopic(String id, Topic updatedList) {
-        validateTopic(updatedList);
-        return topicRepository.findById(new ObjectId(id))
-                .map(existing -> {
-                    existing.setDataStructure(updatedList.getDataStructure());
-                    existing.setQuestionsList(updatedList.getQuestionsList());
-                    return topicRepository.save(existing);
-                })
+    public TopicDTO updateTopic(String id, TopicDTO updatedTopicDTO) {
+        validateTopic(updatedTopicDTO);
+
+        Topic topic = topicRepository.findById(new ObjectId(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Topic not found with ID: " + id));
+
+        topic.setDataStructure(updatedTopicDTO.getDataStructure());
+        Topic updatedTopic = topicRepository.save(topic);
+
+        return modelMapper.map(updatedTopic, TopicDTO.class);
     }
 
     /**
@@ -58,71 +102,75 @@ public class AdminService {
     /**
      * Get all questions for a specific topic
      */
-    public List<Question> getQuestionsByTopic(String topicId) {
-        Topic topic = topicRepository.findById(new ObjectId(topicId))
-                .orElseThrow(() -> new ResourceNotFoundException("Topic not found with ID: " + topicId));
-        return topic.getQuestionsList();
+    public List<QuestionDTO> getQuestionsByTopic(String topicId) {
+        List<Question> questions = questionRepository.findByTopicId(new ObjectId(topicId));
+        return questions.stream()
+                .map(question -> modelMapper.map(question, QuestionDTO.class))
+                .toList();
     }
 
     /**
      * Add a question to a topic
      */
-    public Question addQuestionToTopic(String topicId, Question question) {
-        validateQuestion(question);
-        question.setQuestionId(new ObjectId()); // Generate a new ID for the question
+    public QuestionDTO addQuestionToTopic(String topicId, QuestionDTO questionDTO) {
+        validateQuestion(questionDTO);
+
+        // Map DTO to entity
+        Question question = modelMapper.map(questionDTO, Question.class);
+        question.setQuestionId(new ObjectId());
+        question.setTopicId(new ObjectId(topicId));
+
+        // Save the question
+        Question savedQuestion = questionRepository.save(question);
+
+        // Update the topic with the new question ID
         Topic topic = topicRepository.findById(new ObjectId(topicId))
                 .orElseThrow(() -> new ResourceNotFoundException("Topic not found with ID: " + topicId));
-
-        topic.getQuestionsList().add(question);
+        topic.getQuestionIds().add(savedQuestion.getQuestionId());
         topicRepository.save(topic);
-        return question;
+
+        return modelMapper.map(savedQuestion, QuestionDTO.class);
     }
+
 
     /**
      * Update a question in a topic
      */
-    public Question updateQuestion(String topicId, String questionId, Question updatedQuestion) {
-        validateQuestion(updatedQuestion);
-        Topic topic = topicRepository.findById(new ObjectId(topicId))
-                .orElseThrow(() -> new ResourceNotFoundException("Topic not found with ID: " + topicId));
+    public QuestionDTO updateQuestion(String questionId, QuestionDTO updatedQuestionDTO) {
+        validateQuestion(updatedQuestionDTO);
 
-        topic.getQuestionsList().stream()
-                .filter(q -> q.getQuestionId().toString().equals(questionId))
-                .findFirst()
-                .ifPresentOrElse(
-                        existing -> {
-                            existing.setQuestionName(updatedQuestion.getQuestionName());
-                            existing.setUrl(updatedQuestion.getUrl());
-                            existing.setLevel(updatedQuestion.getLevel());
-                            existing.setDataStructure(updatedQuestion.getDataStructure());
-                        },
-                        () -> { throw new ResourceNotFoundException("Question not found with ID: " + questionId); }
-                );
+        Question question = questionRepository.findById(new ObjectId(questionId))
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found with ID: " + questionId));
 
-        topicRepository.save(topic);
-        return updatedQuestion;
+        question.setQuestionName(updatedQuestionDTO.getQuestionName());
+        question.setUrl(updatedQuestionDTO.getUrl());
+        question.setLevel(updatedQuestionDTO.getLevel());
+        question.setDataStructure(updatedQuestionDTO.getDataStructure());
+
+        Question updatedQuestion = questionRepository.save(question);
+        return modelMapper.map(updatedQuestion, QuestionDTO.class);
     }
 
     /**
-     * Delete a question from a topic
+     * Delete a question
      */
     public void deleteQuestion(String topicId, String questionId) {
-        Topic topic = topicRepository.findById(new ObjectId(topicId))
-                .orElseThrow(() -> new ResourceNotFoundException("Topic not found with ID: " + topicId));
+        Question question = questionRepository.findById(new ObjectId(questionId))
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found with ID: " + questionId));
 
-        boolean removed = topic.getQuestionsList().removeIf(q -> q.getQuestionId().toString().equals(questionId));
-        if (!removed) {
-            throw new ResourceNotFoundException("Question not found with ID: " + questionId);
+        if (!question.getTopicId().toHexString().equals(topicId)) {
+            throw new ResourceNotFoundException("Question does not belong to topic with ID: " + topicId);
         }
 
-        topicRepository.save(topic);
+        questionRepository.deleteById(new ObjectId(questionId));
     }
+
 
     /**
      * Validate topic before saving or updating
      */
-    private void validateTopic(Topic topic) {
-        if (topic.getDataStructure() == null || topic.getDataStructure().isEmpty()) {
+    private void validateTopic(TopicDTO topicDTO) {
+        if (topicDTO.getDataStructure() == null || topicDTO.getDataStructure().isEmpty()) {
             throw new IllegalArgumentException("DataStructure cannot be null or empty");
         }
     }
@@ -130,15 +178,15 @@ public class AdminService {
     /**
      * Validate question before saving or updating
      */
-    private void validateQuestion(Question question) {
-        if (question.getQuestionName() == null || question.getQuestionName().isEmpty()) {
+    private void validateQuestion(QuestionDTO questionDTO) {
+        if (questionDTO.getQuestionName() == null || questionDTO.getQuestionName().isEmpty()) {
             throw new IllegalArgumentException("Question name cannot be null or empty");
         }
-        if (question.getUrl() == null || question.getUrl().isEmpty()) {
+        if (questionDTO.getUrl() == null || questionDTO.getUrl().isEmpty()) {
             throw new IllegalArgumentException("Question URL cannot be null or empty");
         }
-        if (question.getLevel() == null) {
-            throw new IllegalArgumentException("Question level cannot be null");
+        if (questionDTO.getLevel() == null || questionDTO.getLevel().isEmpty()) {
+            throw new IllegalArgumentException("Question level cannot be null or empty");
         }
     }
 }

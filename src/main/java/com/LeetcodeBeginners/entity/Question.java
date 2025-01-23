@@ -15,7 +15,9 @@ public class Question {
     private String questionName;
     private String url;
     private String level;
-    private String dataStructure; // Name of the topic
+    private String dataStructure;
 
+    // Reference to the topic
+    private ObjectId topicId;
     // Getters and Setters
 }

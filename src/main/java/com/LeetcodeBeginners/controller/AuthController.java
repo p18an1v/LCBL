@@ -57,6 +57,16 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token!");
     }
 
+    @DeleteMapping("/delete-user")
+    public ResponseEntity<String> deleteUser(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String password = request.get("password");
+
+        // Call the service method to delete the user
+        authService.deleteUser(email, password);
+
+        return ResponseEntity.ok("User and their progress deleted successfully");
+    }
 
 
 }

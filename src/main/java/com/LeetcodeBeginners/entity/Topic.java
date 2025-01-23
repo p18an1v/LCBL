@@ -6,6 +6,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -14,7 +15,8 @@ public class Topic {
     @Id
     private ObjectId id;
     private String dataStructure;
-    private List<Question> questionsList;
+    // List of question IDs (if you want to store references)
+    private List<ObjectId> questionIds = new ArrayList<>();
 
     // Getters and Setters
 }

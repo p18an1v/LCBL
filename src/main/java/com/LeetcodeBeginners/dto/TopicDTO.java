@@ -1,5 +1,6 @@
 package com.LeetcodeBeginners.dto;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,8 +15,9 @@ import java.util.List;
 @Document
 public class TopicDTO {
     private String id;
+    @NotEmpty(message = "DataStructure cannot be empty")
     private String dataStructure;
-    private List<QuestionDTO> questionsList;
+    private List<String> questionIds;
 
     // Getters and Setters
 }

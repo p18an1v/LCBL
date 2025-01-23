@@ -1,11 +1,14 @@
 package com.LeetcodeBeginners.controller;
 
 
+import com.LeetcodeBeginners.dto.QuestionDTO;
 import com.LeetcodeBeginners.dto.TopicDTO;
 import com.LeetcodeBeginners.entity.Question;
 import com.LeetcodeBeginners.entity.Topic;
 import com.LeetcodeBeginners.service.AdminService;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,76 +19,93 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/admin")
 public class AdminController {
 
-   // @PreAuthorize("hasRole('ROLE_ADMIN')")
-//    @GetMapping("/users")
-//    public ResponseEntity<List<User>> getAllUsers() {
-//        return ResponseEntity.ok(userRepository.findAll());
-//    }
+    private final ModelMapper modelMapper;
+    private final AdminService adminService;
 
-    //endpoints to
-
-    private ModelMapper modelMapper;
-    private AdminService adminService;
-
-    AdminController(ModelMapper modelMapper, AdminService adminService) {
+    public AdminController(ModelMapper modelMapper, AdminService adminService) {
         this.modelMapper = modelMapper;
         this.adminService = adminService;
     }
 
-    @GetMapping
+    /**
+     * Get all topics
+     */
+    @GetMapping("/topics")
     public ResponseEntity<List<TopicDTO>> getAllTopics() {
-        List<Topic> topics = adminService.getAllTopics();
+        List<TopicDTO> topics = adminService.getAllTopics();
         List<TopicDTO> dtos = topics.stream()
                 .map(topic -> modelMapper.map(topic, TopicDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
-    @PostMapping
-    public ResponseEntity<TopicDTO> createTopic(@RequestBody TopicDTO topicDTO) {
-        Topic savedTopic = adminService.createTopic(
-                modelMapper.map(topicDTO, Topic.class));
-        return ResponseEntity.ok(modelMapper.map(savedTopic, TopicDTO.class));
+    /**
+     * Create a new topic
+     */
+    @PostMapping("/topics")
+    public ResponseEntity<TopicDTO> createTopic(@RequestBody @Valid TopicDTO topicDTO) {
+        TopicDTO savedTopic = adminService.createTopic(topicDTO);
+        return ResponseEntity.ok(savedTopic);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<TopicDTO> updateTopic(@PathVariable String id, @RequestBody TopicDTO topicDTO) {
-        Topic updatedTopic = adminService.updateTopic(
-                id, modelMapper.map(topicDTO, Topic.class));
-        return ResponseEntity.ok(modelMapper.map(updatedTopic, TopicDTO.class));
+
+    /**
+     * Update an existing topic
+     */
+    @PutMapping("/topics/{id}")
+    public ResponseEntity<TopicDTO> updateTopic(@PathVariable String id, @RequestBody @Valid TopicDTO topicDTO) {
+        TopicDTO updatedTopic = adminService.updateTopic(id, topicDTO);
+        return ResponseEntity.ok(updatedTopic);
     }
 
-    @DeleteMapping("/{id}")
+    /**
+     * Delete a topic
+     */
+    @DeleteMapping("/topics/{id}")
     public ResponseEntity<Void> deleteTopic(@PathVariable String id) {
         adminService.deleteTopic(id);
         return ResponseEntity.noContent().build();
     }
 
-    //questions endpoints
-    // Get all questions in a specific topic
+    /**
+     * Get all questions in a specific topic
+     */
     @GetMapping("/topics/{topicId}/questions")
-    public ResponseEntity<List<Question>> getQuestionsByTopic(@PathVariable String topicId) {
-        return ResponseEntity.ok(adminService.getQuestionsByTopic(topicId));
+    public ResponseEntity<List<QuestionDTO>> getQuestionsByTopic(@PathVariable String topicId) {
+        List<QuestionDTO> questions = adminService.getQuestionsByTopic(topicId);
+        List<QuestionDTO> dtos = questions.stream()
+                .map(question -> modelMapper.map(question, QuestionDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
-    // Add a question to a specific topic
+    /**
+     * Add a question to a specific topic
+     */
     @PostMapping("/topics/{topicId}/questions")
-    public ResponseEntity<Question> addQuestionToTopic(
+    public ResponseEntity<QuestionDTO> addQuestionToTopic(
             @PathVariable String topicId,
-            @RequestBody Question question) {
-        return ResponseEntity.ok(adminService.addQuestionToTopic(topicId, question));
+            @RequestBody @Valid QuestionDTO questionDTO) {
+        QuestionDTO savedQuestion = adminService.addQuestionToTopic(topicId, questionDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedQuestion);
     }
 
-    // Update a question in a specific topic
+    /**
+     * Update a question in a specific topic
+     */
     @PutMapping("/topics/{topicId}/questions/{questionId}")
-    public ResponseEntity<Question> updateQuestion(
+    public ResponseEntity<QuestionDTO> updateQuestion(
             @PathVariable String topicId,
             @PathVariable String questionId,
-            @RequestBody Question updatedQuestion) {
-        return ResponseEntity.ok(adminService.updateQuestion(topicId, questionId, updatedQuestion));
+            @RequestBody @Valid QuestionDTO updatedQuestionDTO) {
+        QuestionDTO updatedQuestion = adminService.updateQuestion(questionId, updatedQuestionDTO);
+        return ResponseEntity.ok(updatedQuestion);
     }
 
-    // Delete a question from a topic
+
+    /**
+     * Delete a question from a specific topic
+     */
     @DeleteMapping("/topics/{topicId}/questions/{questionId}")
     public ResponseEntity<Void> deleteQuestion(
             @PathVariable String topicId,

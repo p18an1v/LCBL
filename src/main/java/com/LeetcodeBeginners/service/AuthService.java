@@ -5,7 +5,9 @@ import com.LeetcodeBeginners.dto.PasswordResetToken;
 import com.LeetcodeBeginners.dto.UserRegistrationDTO;
 import com.LeetcodeBeginners.dto.UserResponseDTO;
 import com.LeetcodeBeginners.entity.User;
+import com.LeetcodeBeginners.entity.UserProgress;
 import com.LeetcodeBeginners.repository.PasswordResetTokenRepository;
+import com.LeetcodeBeginners.repository.UserProgressRepository;
 import com.LeetcodeBeginners.repository.UserRepository;
 import com.LeetcodeBeginners.util.JwtUtil;
 import org.modelmapper.ModelMapper;
@@ -14,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -25,14 +28,16 @@ public class AuthService {
     private final PasswordResetTokenRepository tokenRepository;
     private final EmailService emailService;
     private final ModelMapper modelMapper;
+    private final UserProgressRepository userProgressRepository;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, PasswordResetTokenRepository tokenRepository, EmailService emailService, ModelMapper modelMapper) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, PasswordResetTokenRepository tokenRepository, EmailService emailService, ModelMapper modelMapper, UserProgressRepository userProgressRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.tokenRepository = tokenRepository;
         this.emailService = emailService;
         this.modelMapper = modelMapper;
+        this.userProgressRepository = userProgressRepository;
     }
 
     public String registerUser(UserRegistrationDTO registrationDTO) {
@@ -40,12 +45,20 @@ public class AuthService {
             throw new RuntimeException("User already exists with email: " + registrationDTO.getEmail());
         }
 
+        //save user
         User user = new User();
         user.setEmail(registrationDTO.getEmail());
         user.setPassword(passwordEncoder.encode(registrationDTO.getPassword()));
         user.setRole(registrationDTO.getRole() != null ? registrationDTO.getRole() : "ROLE_USER");//"ROLE_USER"
-
         userRepository.save(user);
+
+        // Create an empty UserProgress document for the user
+        UserProgress userProgress = new UserProgress();
+        userProgress.setUserId(user.getId());
+        userProgress.setUserEmail(user.getEmail());
+        userProgress.setCompletedQuestions(new ArrayList<>()); // Empty list
+        userProgress.setTotalSolved(0); // No questions solved initially
+        userProgressRepository.save(userProgress);
         return "User registered successfully with role: " + user.getRole();
     }
 
@@ -128,6 +141,25 @@ public class AuthService {
         tokenRepository.delete(resetToken);
         return true;
     }
+
+
+    public void deleteUser(String email, String password) {
+        // Find the user by email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        // Validate the password
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Invalid email or password");
+        }
+
+        // Delete user progress associated with the user
+        userProgressRepository.deleteById(user.getId());
+
+        // Delete the user
+        userRepository.delete(user);
+    }
+
 
 
 }
