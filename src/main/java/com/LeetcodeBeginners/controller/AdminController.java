@@ -76,28 +76,22 @@ public class AdminController {
     /*-----------------------------------Topic-Routes-End--------------------------------------------*/
 
     /*-----------------------------------Pattern-Routes-Start--------------------------------------------*/
+
+    /*
+        * Create a new pattern
+     */
     @PostMapping("/patterns")
     public ResponseEntity<PatternDTO> createPattern(@RequestBody PatternDTO patternDTO) {
         return ResponseEntity.ok(adminService.createPattern(patternDTO));
     }
 
+    /**
+     * Get all patterns
+     */
     @GetMapping("/patterns")
     public ResponseEntity<List<PatternDTO>> getAllPatterns() {
         List<PatternDTO> patterns = adminService.getAllPatterns();
         return ResponseEntity.ok(patterns);
-    }
-
-
-    @PostMapping("/{patternId}/questions")
-    public ResponseEntity<QuestionDTO> addQuestionToPattern(
-            @PathVariable String patternId,
-            @RequestBody QuestionDTO questionDTO) {
-        return ResponseEntity.ok(adminService.addQuestionToPattern(patternId, questionDTO));
-    }
-
-    @GetMapping("/{patternId}/questions")
-    public ResponseEntity<List<QuestionDTO>> getQuestionsByPattern(@PathVariable String patternId) {
-        return ResponseEntity.ok(adminService.getQuestionsByPattern(patternId));
     }
 
     /**
@@ -119,11 +113,33 @@ public class AdminController {
         adminService.deletePattern(patternId);
         return ResponseEntity.noContent().build();
     }
+    /*-----------------------------------Pattern-Routes-End--------------------------------------------*/
+
+    /*-----------------------------------Pattern-Questions-Routes-Start--------------------------------------------*/
+
+    /**
+     * Add a question to a pattern
+     */
+    @PostMapping("/patterns/{patternId}/questions")
+    public ResponseEntity<QuestionDTO> addQuestionToPattern(
+            @PathVariable String patternId,
+            @RequestBody QuestionDTO questionDTO) {
+        return ResponseEntity.ok(adminService.addQuestionToPattern(patternId, questionDTO));
+    }
+
+    /**
+     * Get all questions in a pattern
+     */
+    @GetMapping("/patterns/{patternId}/questions")
+    public ResponseEntity<List<QuestionDTO>> getQuestionsByPattern(@PathVariable String patternId) {
+        return ResponseEntity.ok(adminService.getQuestionsByPattern(patternId));
+    }
+
 
     /**
      * Update a question in a pattern
      */
-    @PutMapping("/{patternId}/questions/{questionId}")
+    @PutMapping("/patterns/{patternId}/questions/{questionId}")
     public ResponseEntity<QuestionDTO> updateQuestionInPattern(
             @PathVariable String patternId,
             @PathVariable String questionId,
@@ -134,16 +150,14 @@ public class AdminController {
     /**
      * Delete a question from a pattern
      */
-    @DeleteMapping("/{patternId}/questions/{questionId}")
+    @DeleteMapping("/patterns/{patternId}/questions/{questionId}")
     public ResponseEntity<Void> deleteQuestionFromPattern(
             @PathVariable String patternId,
             @PathVariable String questionId) {
         adminService.deleteQuestionFromPattern(patternId, questionId);
         return ResponseEntity.noContent().build();
     }
-
-
-    /*-----------------------------------Pattern-Routes-End--------------------------------------------*/
+    /*-----------------------------------Pattern-Questions-Routes-End--------------------------------------------*/
 
     /*-----------------------------------Topic-Quetions-Routes-Start--------------------------------------------*/
     /**
