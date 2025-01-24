@@ -51,9 +51,17 @@ public class UserController {
     }
 
     // Track a solved question
-    @PostMapping("/progress/{userId}/track")
-    public ResponseEntity<UserProgressDTO> trackQuestion(
-            @PathVariable String userId, @RequestParam String questionId) {
-        return ResponseEntity.ok(userService.trackQuestion(userId, questionId));
+    @PostMapping("/progress/{userId}/toggle")
+    public ResponseEntity<UserProgressDTO> toggleQuestion(
+            @PathVariable String userId,
+            @RequestParam String questionId,
+            @RequestParam boolean completed) {
+
+        if (completed) {
+            return ResponseEntity.ok(userService.trackQuestion(userId, questionId));
+        } else {
+            return ResponseEntity.ok(userService.untrackQuestion(userId, questionId));
+        }
     }
+
 }

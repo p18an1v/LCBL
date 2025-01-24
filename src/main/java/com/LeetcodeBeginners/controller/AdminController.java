@@ -58,6 +58,13 @@ public class AdminController {
         return ResponseEntity.ok(updatedTopic);
     }
 
+    @GetMapping("/topics/{topicId}")
+    public ResponseEntity<TopicDTO> getTopicById(@PathVariable String topicId) {
+        TopicDTO topic = adminService.getTopicById(topicId);
+        return ResponseEntity.ok(topic);
+    }
+
+
     /**
      * Delete a topic
      */

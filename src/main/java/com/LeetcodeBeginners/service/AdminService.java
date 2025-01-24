@@ -89,6 +89,22 @@ public class AdminService {
         return modelMapper.map(updatedTopic, TopicDTO.class);
     }
 
+    public TopicDTO getTopicById(String topicId) {
+        Topic topic = topicRepository.findById(new ObjectId(topicId))
+                .orElseThrow(() -> new ResourceNotFoundException("Topic not found with ID: " + topicId));
+
+        // Convert the Topic to TopicDTO
+        TopicDTO topicDTO = modelMapper.map(topic, TopicDTO.class);
+        List<String> questionIds = topic.getQuestionIds()
+                .stream()
+                .map(ObjectId::toString) // Convert ObjectId to String
+                .toList();
+
+        topicDTO.setQuestionIds(questionIds);
+        return topicDTO;
+    }
+
+
     /**
      * Delete a topic
      */
