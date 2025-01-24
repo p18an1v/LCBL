@@ -1,10 +1,13 @@
 package com.LeetcodeBeginners.service;
 
+import com.LeetcodeBeginners.dto.PatternDTO;
 import com.LeetcodeBeginners.dto.QuestionDTO;
 import com.LeetcodeBeginners.dto.TopicDTO;
+import com.LeetcodeBeginners.entity.Pattern;
 import com.LeetcodeBeginners.entity.Question;
 import com.LeetcodeBeginners.entity.Topic;
 import com.LeetcodeBeginners.exception.ResourceNotFoundException;
+import com.LeetcodeBeginners.repository.PatternRepository;
 import com.LeetcodeBeginners.repository.QuestionRepository;
 import com.LeetcodeBeginners.repository.TopicRepository;
 import org.bson.types.ObjectId;
@@ -22,11 +25,17 @@ public class AdminService {
     private TopicRepository topicRepository;
 
     @Autowired
+    private PatternRepository patternRepository;
+
+    @Autowired
     private QuestionRepository questionRepository;
 
     @Autowired
     private ModelMapper modelMapper;
 
+
+
+    /*----------------------------------------------Topic-Start--------------------------------------------*/
     /**
      * Get all topics
      */
@@ -114,7 +123,133 @@ public class AdminService {
         }
         topicRepository.deleteById(new ObjectId(id));
     }
+    /*----------------------------------------------Topic-End--------------------------------------------*/
 
+    /*----------------------------------------------Pattern-Start--------------------------------------------*/
+    public List<PatternDTO> getAllPatterns() {
+        List<Pattern> patterns = patternRepository.findAll();
+        return patterns.stream()
+                .map(pattern -> {
+                    PatternDTO patternDTO = modelMapper.map(pattern, PatternDTO.class);
+                    patternDTO.setQuestionIds(
+                            pattern.getQuestionIds().stream().toList()
+                    );
+                    return patternDTO;
+                })
+                .toList();
+    }
+
+    public PatternDTO createPattern(PatternDTO patternDTO) {
+        Pattern pattern = modelMapper.map(patternDTO, Pattern.class);
+        pattern.setQuestionIds(new ArrayList<>());
+        Pattern savedPattern = patternRepository.save(pattern);
+        return modelMapper.map(savedPattern, PatternDTO.class);
+    }
+
+    public QuestionDTO addQuestionToPattern(String patternId, QuestionDTO questionDTO) {
+        // Convert patternId from String to ObjectId
+        Pattern pattern = patternRepository.findById(new ObjectId(patternId))
+                .orElseThrow(() -> new ResourceNotFoundException("Pattern not found"));
+
+        // Map DTO to entity and generate a new ObjectId for the question
+        Question question = modelMapper.map(questionDTO, Question.class);
+        question.setQuestionId(new ObjectId());
+        question.setTopicId(new ObjectId(patternId)); // Optional if questions reference the pattern
+        questionRepository.save(question);
+
+        // Add the question ID to the pattern
+        pattern.getQuestionIds().add(question.getQuestionId().toString()); // Store as String
+        patternRepository.save(pattern);
+
+        // Return the saved question as DTO
+        return modelMapper.map(question, QuestionDTO.class);
+    }
+
+
+    public List<QuestionDTO> getQuestionsByPattern(String patternId) {
+        // Convert patternId from String to ObjectId
+        Pattern pattern = patternRepository.findById(new ObjectId(patternId))
+                .orElseThrow(() -> new ResourceNotFoundException("Pattern not found"));
+
+        // Fetch questions by their IDs
+        return pattern.getQuestionIds().stream()
+                .map(questionId -> {
+                    Question question = questionRepository.findById(new ObjectId(questionId))
+                            .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
+                    return modelMapper.map(question, QuestionDTO.class);
+                })
+                .toList();
+    }
+
+    /**
+     * Update an existing pattern
+     */
+    public PatternDTO updatePattern(String patternId, PatternDTO updatedPatternDTO) {
+        Pattern pattern = patternRepository.findById(new ObjectId(patternId))
+                .orElseThrow(() -> new ResourceNotFoundException("Pattern not found with ID: " + patternId));
+
+        // Update fields
+        pattern.setPattern(updatedPatternDTO.getPattern());
+        // Save the updated pattern
+        Pattern updatedPattern = patternRepository.save(pattern);
+
+        return modelMapper.map(updatedPattern, PatternDTO.class);
+    }
+
+    /**
+     * Delete a pattern
+     */
+    public void deletePattern(String patternId) {
+        if (!patternRepository.existsById(new ObjectId(patternId))) {
+            throw new ResourceNotFoundException("Pattern not found with ID: " + patternId);
+        }
+        patternRepository.deleteById(new ObjectId(patternId));
+    }
+
+
+    /**
+     * Update a question in a pattern
+     */
+    public QuestionDTO updateQuestionInPattern(String patternId, String questionId, QuestionDTO updatedQuestionDTO) {
+        Pattern pattern = patternRepository.findById(new ObjectId(patternId))
+                .orElseThrow(() -> new ResourceNotFoundException("Pattern not found"));
+
+        if (!pattern.getQuestionIds().contains(questionId)) {
+            throw new ResourceNotFoundException("Question not found in the pattern");
+        }
+
+        Question question = questionRepository.findById(new ObjectId(questionId))
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
+
+        // Update question fields
+        question.setQuestionName(updatedQuestionDTO.getQuestionName());
+        question.setUrl(updatedQuestionDTO.getUrl());
+        question.setLevel(updatedQuestionDTO.getLevel());
+        question.setDataStructure(updatedQuestionDTO.getDataStructure());
+        questionRepository.save(question);
+
+        return modelMapper.map(question, QuestionDTO.class);
+    }
+
+    /**
+     * Delete a question from a pattern
+     */
+    public void deleteQuestionFromPattern(String patternId, String questionId) {
+        Pattern pattern = patternRepository.findById(new ObjectId(patternId))
+                .orElseThrow(() -> new ResourceNotFoundException("Pattern not found"));
+
+        if (!pattern.getQuestionIds().remove(questionId)) {
+            throw new ResourceNotFoundException("Question not found in the pattern");
+        }
+
+        patternRepository.save(pattern); // Update pattern without the question
+        questionRepository.deleteById(new ObjectId(questionId)); // Remove question from DB
+    }
+
+
+    /*----------------------------------------------Pattern-End--------------------------------------------*/
+
+    /*----------------------------------------------Question-Start--------------------------------------------*/
     /**
      * Get all questions for a specific topic
      */
@@ -180,7 +315,7 @@ public class AdminService {
 
         questionRepository.deleteById(new ObjectId(questionId));
     }
-
+    /*----------------------------------------------Question-End--------------------------------------------*/
 
     /**
      * Validate topic before saving or updating

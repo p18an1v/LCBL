@@ -1,10 +1,9 @@
 package com.LeetcodeBeginners.controller;
 
 
+import com.LeetcodeBeginners.dto.PatternDTO;
 import com.LeetcodeBeginners.dto.QuestionDTO;
 import com.LeetcodeBeginners.dto.TopicDTO;
-import com.LeetcodeBeginners.entity.Question;
-import com.LeetcodeBeginners.entity.Topic;
 import com.LeetcodeBeginners.service.AdminService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
@@ -27,6 +26,7 @@ public class AdminController {
         this.adminService = adminService;
     }
 
+    /*-----------------------------------Topic-Routes-Start--------------------------------------------*/
     /**
      * Get all topics
      */
@@ -73,7 +73,79 @@ public class AdminController {
         adminService.deleteTopic(id);
         return ResponseEntity.noContent().build();
     }
+    /*-----------------------------------Topic-Routes-End--------------------------------------------*/
 
+    /*-----------------------------------Pattern-Routes-Start--------------------------------------------*/
+    @PostMapping("/patterns")
+    public ResponseEntity<PatternDTO> createPattern(@RequestBody PatternDTO patternDTO) {
+        return ResponseEntity.ok(adminService.createPattern(patternDTO));
+    }
+
+    @GetMapping("/patterns")
+    public ResponseEntity<List<PatternDTO>> getAllPatterns() {
+        List<PatternDTO> patterns = adminService.getAllPatterns();
+        return ResponseEntity.ok(patterns);
+    }
+
+
+    @PostMapping("/{patternId}/questions")
+    public ResponseEntity<QuestionDTO> addQuestionToPattern(
+            @PathVariable String patternId,
+            @RequestBody QuestionDTO questionDTO) {
+        return ResponseEntity.ok(adminService.addQuestionToPattern(patternId, questionDTO));
+    }
+
+    @GetMapping("/{patternId}/questions")
+    public ResponseEntity<List<QuestionDTO>> getQuestionsByPattern(@PathVariable String patternId) {
+        return ResponseEntity.ok(adminService.getQuestionsByPattern(patternId));
+    }
+
+    /**
+     * Update an existing pattern
+     */
+    @PutMapping("/patterns/{patternId}")
+    public ResponseEntity<PatternDTO> updatePattern(
+            @PathVariable String patternId,
+            @RequestBody @Valid PatternDTO patternDTO) {
+        PatternDTO updatedPattern = adminService.updatePattern(patternId, patternDTO);
+        return ResponseEntity.ok(updatedPattern);
+    }
+
+    /**
+     * Delete a pattern
+     */
+    @DeleteMapping("/patterns/{patternId}")
+    public ResponseEntity<Void> deletePattern(@PathVariable String patternId) {
+        adminService.deletePattern(patternId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Update a question in a pattern
+     */
+    @PutMapping("/{patternId}/questions/{questionId}")
+    public ResponseEntity<QuestionDTO> updateQuestionInPattern(
+            @PathVariable String patternId,
+            @PathVariable String questionId,
+            @RequestBody QuestionDTO updatedQuestionDTO) {
+        return ResponseEntity.ok(adminService.updateQuestionInPattern(patternId, questionId, updatedQuestionDTO));
+    }
+
+    /**
+     * Delete a question from a pattern
+     */
+    @DeleteMapping("/{patternId}/questions/{questionId}")
+    public ResponseEntity<Void> deleteQuestionFromPattern(
+            @PathVariable String patternId,
+            @PathVariable String questionId) {
+        adminService.deleteQuestionFromPattern(patternId, questionId);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    /*-----------------------------------Pattern-Routes-End--------------------------------------------*/
+
+    /*-----------------------------------Topic-Quetions-Routes-Start--------------------------------------------*/
     /**
      * Get all questions in a specific topic
      */
@@ -120,4 +192,5 @@ public class AdminController {
         adminService.deleteQuestion(topicId, questionId);
         return ResponseEntity.noContent().build();
     }
+    /*-----------------------------------Question-Routes-End--------------------------------------------*/
 }
