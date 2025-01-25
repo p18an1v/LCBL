@@ -12,7 +12,6 @@ import com.LeetcodeBeginners.repository.QuestionRepository;
 import com.LeetcodeBeginners.repository.TopicRepository;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,18 +20,17 @@ import java.util.List;
 @Service
 public class AdminService {
 
-    @Autowired
-    private TopicRepository topicRepository;
+    private final TopicRepository topicRepository;
+    private  final PatternRepository patternRepository;
+    private final  QuestionRepository questionRepository;
+    private  final  ModelMapper modelMapper;
 
-    @Autowired
-    private PatternRepository patternRepository;
-
-    @Autowired
-    private QuestionRepository questionRepository;
-
-    @Autowired
-    private ModelMapper modelMapper;
-
+    public AdminService(TopicRepository topicRepository, PatternRepository patternRepository, QuestionRepository questionRepository, ModelMapper modelMapper) {
+        this.topicRepository = topicRepository;
+        this.patternRepository = patternRepository;
+        this.questionRepository = questionRepository;
+        this.modelMapper = modelMapper;
+    }
 
 
     /*----------------------------------------------Topic-Start--------------------------------------------*/

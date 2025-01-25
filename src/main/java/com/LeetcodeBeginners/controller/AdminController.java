@@ -30,7 +30,7 @@ public class AdminController {
     /**
      * Get all topics
      */
-    @GetMapping("/topics")
+    @GetMapping("/topics/getAll")
     public ResponseEntity<List<TopicDTO>> getAllTopics() {
         List<TopicDTO> topics = adminService.getAllTopics();
         List<TopicDTO> dtos = topics.stream()
@@ -88,7 +88,7 @@ public class AdminController {
     /**
      * Get all patterns
      */
-    @GetMapping("/patterns")
+    @GetMapping("/patterns/getAll")
     public ResponseEntity<List<PatternDTO>> getAllPatterns() {
         List<PatternDTO> patterns = adminService.getAllPatterns();
         return ResponseEntity.ok(patterns);

@@ -8,21 +8,20 @@ import com.LeetcodeBeginners.repository.QuestionRepository;
 import com.LeetcodeBeginners.repository.UserProgressRepository;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserProgressRepository userProgressRepository;
+    private final UserProgressRepository userProgressRepository;
+    private final ModelMapper modelMapper;
+    private final  QuestionRepository questionRepository;
 
-    @Autowired
-    private ModelMapper modelMapper;
-
-    @Autowired
-    private QuestionRepository questionRepository;
-
+    public UserService(UserProgressRepository userProgressRepository, ModelMapper modelMapper, QuestionRepository questionRepository) {
+        this.userProgressRepository = userProgressRepository;
+        this.modelMapper = modelMapper;
+        this.questionRepository = questionRepository;
+    }
     // Fetch user progress
     public UserProgressDTO getUserProgress(String userId) {
         // Log userId

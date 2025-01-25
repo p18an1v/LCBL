@@ -1,21 +1,29 @@
 package com.LeetcodeBeginners.controller;
 
 import com.LeetcodeBeginners.dto.*;
+import com.LeetcodeBeginners.service.AdminService;
 import com.LeetcodeBeginners.service.AuthService;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
+    private final AdminService adminService;
+    private final ModelMapper modelMapper;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, AdminService adminService, ModelMapper modelMapper) {
         this.authService = authService;
+        this.adminService = adminService;
+        this.modelMapper = modelMapper;
     }
 
     @PostMapping("/register")
@@ -68,5 +76,24 @@ public class AuthController {
         return ResponseEntity.ok("User and their progress deleted successfully");
     }
 
+    /**
+     * Get all topics
+     */
+    @GetMapping("/topics/getAll")
+    public ResponseEntity<List<TopicDTO>> getAllTopics() {
+        List<TopicDTO> topics = adminService.getAllTopics();
+        List<TopicDTO> dtos = topics.stream()
+                .map(topic -> modelMapper.map(topic, TopicDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
 
+    /**
+     * Get all patterns
+     */
+    @GetMapping("/patterns/getAll")
+    public ResponseEntity<List<PatternDTO>> getAllPatterns() {
+        List<PatternDTO> patterns = adminService.getAllPatterns();
+        return ResponseEntity.ok(patterns);
+    }
 }
