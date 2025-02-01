@@ -96,4 +96,25 @@ public class AuthController {
         List<PatternDTO> patterns = adminService.getAllPatterns();
         return ResponseEntity.ok(patterns);
     }
+
+    /**
+     * Get all questions in a specific topic
+     */
+    @GetMapping("/topics/{topicId}/questions")
+    public ResponseEntity<List<QuestionDTO>> getQuestionsByTopic(@PathVariable String topicId) {
+        List<QuestionDTO> questions = adminService.getQuestionsByTopic(topicId);
+        List<QuestionDTO> dtos = questions.stream()
+                .map(question -> modelMapper.map(question, QuestionDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+
+    /**
+     * Get all questions in a pattern
+     */
+    @GetMapping("/patterns/{patternId}/questions")
+    public ResponseEntity<List<QuestionDTO>> getQuestionsByPattern(@PathVariable String patternId) {
+        return ResponseEntity.ok(adminService.getQuestionsByPattern(patternId));
+    }
 }

@@ -159,7 +159,4 @@ public class AuthService {
         // Delete the user
         userRepository.delete(user);
     }
-
-
-
 }
